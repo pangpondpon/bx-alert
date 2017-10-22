@@ -43,5 +43,7 @@ class AddConfigCommand extends Command
             $this->argument('secondary'),
             (float) $this->argument('threshold')
         );
+
+        $this->info("Pair has been added.");
     }
 }
