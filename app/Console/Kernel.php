@@ -2,8 +2,10 @@
 
 namespace App\Console;
 
+use App\AutoAlertConfig;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Schema;
 
 class Kernel extends ConsoleKernel
 {
@@ -24,8 +26,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        if(Schema::hasTable('auto_alert_configs')) {
+            $this->schedulePriceAlert($schedule);
+        }
     }
 
     /**
@@ -38,5 +41,14 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
+    }
+
+    private function schedulePriceAlert(Schedule $schedule)
+    {
+        $configs = AutoAlertConfig::whereValid(true)->get();
+
+        $configs->each(function(AutoAlertConfig $config) use ($schedule) {
+            $schedule->command("alert:price {$config->primary} {$config->secondary} {$config->threshold}")->everyMinute();
+        });
     }
 }

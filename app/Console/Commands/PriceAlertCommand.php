@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\AutoAlertConfig;
 use App\Business\PriceAlerters\PriceAlerter;
 use App\Business\PricesFetchers\PriceFetcher;
+use App\Exceptions\PairNotFoundException;
 use Illuminate\Console\Command;
 
 class PriceAlertCommand extends Command
@@ -22,6 +24,12 @@ class PriceAlertCommand extends Command
      */
     protected $description = 'Alert when price goes to to the setting point.';
 
+    private $primary;
+
+    private $secondary;
+
+    private $threshold;
+
     /**
      * Create a new command instance.
      *
@@ -30,6 +38,8 @@ class PriceAlertCommand extends Command
     public function __construct()
     {
         parent::__construct();
+
+
     }
 
     /**
@@ -39,12 +49,29 @@ class PriceAlertCommand extends Command
      */
     public function handle()
     {
+        $this->primary = $this->argument('primary');
+        $this->secondary = $this->argument('secondary');
+        $this->threshold = (float) $this->argument('threshold');
+
         $alerter = new PriceAlerter(
-            $this->argument('primary'),
-            $this->argument('secondary'),
-            (float) $this->argument('threshold')
+            $this->primary,
+            $this->secondary,
+            $this->threshold
         );
 
-        $alerter->alertIfPriceAboveThreshold();
+        try {
+            $alerter->alertIfPriceAboveThreshold();
+        } catch (PairNotFoundException $e) {
+            $this->setConfigAsInvalid();
+        }
+    }
+
+    private function setConfigAsInvalid()
+    {
+        AutoAlertConfig::wherePrimary($this->primary)
+            ->whereSecondary($this->secondary)
+            ->update([
+                'valid' => false,
+            ]);
     }
 }
