@@ -41,9 +41,11 @@ class PriceAlerter
     {
         $this->pair = $this->findPair();
 
-        if($this->priceMoreThanThreshold()) {
-            $this->sendAlertToLine();
-        }
+        if(!$this->priceMoreThanThreshold()) return false;
+
+        $this->sendAlertToLine();
+
+        return true;
     }
 
     private function findPair(): Pair

@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 
 class PairFinder
 {
-    public function find($primary, $secondary)
+    public function find($primary, $secondary): Pair
     {
         $prices = PricesStorage::prices();
 

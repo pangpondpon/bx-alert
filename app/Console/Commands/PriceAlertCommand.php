@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\AlertHistory;
 use App\AutoAlertConfig;
 use App\Business\PriceAlerters\PriceAlerter;
-use App\Business\PricesFetchers\PriceFetcher;
 use App\Exceptions\PairNotFoundException;
 use Illuminate\Console\Command;
 
@@ -51,7 +51,7 @@ class PriceAlertCommand extends Command
     {
         $this->primary = $this->argument('primary');
         $this->secondary = $this->argument('secondary');
-        $this->threshold = (float) $this->argument('threshold');
+        $this->threshold = (float)$this->argument('threshold');
 
         $alerter = new PriceAlerter(
             $this->primary,
@@ -60,7 +60,13 @@ class PriceAlertCommand extends Command
         );
 
         try {
-            $alerter->alertIfPriceAboveThreshold();
+            $isAlerted = $alerter->alertIfPriceAboveThreshold();
+
+            if ($isAlerted) {
+                $this->setConfigAsInvalid();
+                $this->addAlertToHistory();
+            }
+
         } catch (PairNotFoundException $e) {
             $this->setConfigAsInvalid();
         }
@@ -73,5 +79,14 @@ class PriceAlertCommand extends Command
             ->update([
                 'valid' => false,
             ]);
+    }
+
+    private function addAlertToHistory()
+    {
+        AlertHistory::add(
+            $this->primary,
+            $this->secondary,
+            $this->threshold
+        );
     }
 }
