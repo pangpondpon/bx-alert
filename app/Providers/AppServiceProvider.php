@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Business\Lines\LineBot;
 use App\Business\PricesFetchers\PriceFetcher;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton('prices', function ($app) {
             return (new PriceFetcher)->getPrices();
+        });
+
+        $this->app->singleton('line', function ($app) {
+            return (new LineBot)->getBot();
         });
     }
 }
