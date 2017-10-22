@@ -4,6 +4,7 @@
 namespace App\Business\PriceAlerters;
 
 
+use App\Business\Lines\LineMessage;
 use App\Business\Pairs\PairFinder;
 use App\Exceptions\PairNotFoundException;
 use App\Pair;
@@ -18,6 +19,9 @@ class PriceAlerter
 
     /** @var float */
     private $threshold;
+
+    /** @var Pair */
+    private $pair;
 
     /**
      * PairAlerter constructor.
@@ -35,11 +39,10 @@ class PriceAlerter
 
     public function alertIfPriceAboveThreshold()
     {
-        $pair = $this->findPair();
+        $this->pair = $this->findPair();
 
-
-        if($pair->lastPrice >= $this->threshold) {
-            echo "Alert needed!\n";
+        if($this->priceMoreThanThreshold()) {
+            $this->sendAlertToLine();
         }
     }
 
@@ -48,6 +51,31 @@ class PriceAlerter
         $finder = new PairFinder;
 
         return $finder->find($this->primary, $this->secondary);
+    }
+
+    private function priceMoreThanThreshold()
+    {
+        return $this->pair->lastPrice >= $this->threshold;
+    }
+
+    private function sendAlertToLine()
+    {
+        $this->sendTextAlert();
+    }
+
+    private function sendTextAlert()
+    {
+        (new LineMessage)->sendTexts($this->composeTextMessageForAlert());
+    }
+
+    private function composeTextMessageForAlert()
+    {
+        return "Pair {$this->primary} {$this->secondary} now has a price above {$this->formattedThreshold()} baht.";
+    }
+
+    private function formattedThreshold()
+    {
+        return number_format($this->threshold);
     }
 
 }
